@@ -8,9 +8,10 @@ const root = join(fileURLToPath(new URL('..', import.meta.url)), 'client', 'dist
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
 
 const http = createServer(async (req, res) => {
-  const path = normalize(new URL(req.url, 'http://x').pathname).replace(/^(\.\.[/\\])+/, '');
+  let path = normalize(new URL(req.url, 'http://x').pathname).replace(/^(\.\.[/\\])+/, '');
+  if (path === '/') path = '/index.html';
   try {
-    const file = await readFile(join(root, path === '/' ? 'index.html' : path));
+    const file = await readFile(join(root, path));
     res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream' }).end(file);
   } catch { res.writeHead(404).end('Not found'); }
 });

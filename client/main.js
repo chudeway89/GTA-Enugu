@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 const hud = document.getElementById('hud');
 const scene = new THREE.Scene();
@@ -32,13 +33,15 @@ function addRoad(pts, w) {
 }
 if (map) {
   for (const r of map.roads) addRoad(r.pts, roadWidth[r.type] ?? 5);
+  const geoms = [];
   for (const b of map.buildings) {
     if (b.pts.length < 4) continue;
     const shape = new THREE.Shape(b.pts.map(([x, z]) => new THREE.Vector2(x, -z)));
     const g = new THREE.ExtrudeGeometry(shape, { depth: b.h, bevelEnabled: false });
     g.rotateX(-Math.PI / 2);
-    scene.add(new THREE.Mesh(g, bldMat));
+    geoms.push(g);
   }
+  scene.add(new THREE.Mesh(mergeGeometries(geoms), bldMat));
 } else {
   // placeholder grid until `npm run map` has been run
   for (let i = -10; i <= 10; i++) { addRoad([[i * 100, -1000], [i * 100, 1000]], 10); addRoad([[-1000, i * 100], [1000, i * 100]], 10); }
@@ -54,7 +57,15 @@ const makeCar = (color) => { const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 4.2), new THREE.MeshLambertMaterial({ color })); body.position.y = 0.8; g.add(body);
   const top = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.7, 2), new THREE.MeshLambertMaterial({ color: 0x222222 })); top.position.set(0, 1.5, -0.2); g.add(top);
   scene.add(g); return g; };
-const me = { car: makeCar(0xd22), x: cfg?.spawn?.x ?? 0, z: cfg?.spawn?.z ?? 0, h: 0, v: 0 };
+const me = { car: makeCar(0xdd2222), x: cfg?.spawn?.x ?? 0, z: cfg?.spawn?.z ?? 0, h: 0, v: 0 };
+// snap the spawn to the nearest drivable road vertex so we never start inside a building
+if (map) {
+  let best = Infinity;
+  for (const r of map.roads) if (roadWidth[r.type]) for (const [x, z] of r.pts) {
+    const d = Math.hypot(x - me.x, z - me.z); if (d < best) { best = d; me.sx = x; me.sz = z; }
+  }
+  if (best < Infinity) { me.x = me.sx; me.z = me.sz; }
+}
 const keys = {}; addEventListener('keydown', (e) => (keys[e.code] = true)); addEventListener('keyup', (e) => (keys[e.code] = false));
 
 // --- multiplayer ---
@@ -65,7 +76,7 @@ ws.onmessage = (e) => { const m = JSON.parse(e.data);
   if (m.t === 'welcome') myId = m.id;
   if (m.t === 'players') { const seen = new Set();
     for (const p of m.players) { if (p.id === myId) continue; seen.add(p.id);
-      if (!others.has(p.id)) others.set(p.id, makeCar(0x28d));
+      if (!others.has(p.id)) others.set(p.id, makeCar(0x2288dd));
       const c = others.get(p.id); c.position.set(p.x, 0, p.z); c.rotation.y = p.h; }
     for (const [id, c] of others) if (!seen.has(id)) { scene.remove(c); others.delete(id); } } };
 setInterval(() => ws.readyState === 1 && ws.send(JSON.stringify({ t: 'state', name: cfg?.player?.name, x: me.x, z: me.z, h: me.h })), 50);
@@ -85,7 +96,7 @@ function tick(now) {
   me.h += steer * 1.8 * dt * Math.min(1, Math.abs(me.v) / 6) * Math.sign(me.v || 1);
   me.x += Math.sin(me.h) * me.v * dt; me.z += Math.cos(me.h) * me.v * dt;
   me.car.position.set(me.x, 0, me.z); me.car.rotation.y = me.h;
-  camera.position.set(me.x - Math.sin(me.h) * 10, 5, me.z - Math.cos(me.h) * 10); camera.lookAt(me.x, 1.5, me.z);
+  camera.position.set(me.x - Math.sin(me.h) * 12, 9, me.z - Math.cos(me.h) * 12); camera.lookAt(me.x, 1.5, me.z);
   const m = missions?.[mi];
   if (m) { marker.position.set(m.goal.x, 40, m.goal.z);
     if (Math.hypot(me.x - m.goal.x, me.z - m.goal.z) < m.goal.radius) mi++; }

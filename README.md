@@ -5,7 +5,7 @@ An original open-world driving game set in Enugu, Nigeria, with online multiplay
 ## Run
 ```
 npm install
-npm run map     # fetch Enugu roads/buildings from OpenStreetMap (needs internet; (c) OSM contributors, ODbL)
+npm run map     # (already run: central Enugu data is committed) refresh roads/buildings from OpenStreetMap; (c) OSM contributors, ODbL
 npm start       # build client + serve on :3000 (PORT env to change)
 ```
 Friends join by opening your server's URL (host it somewhere reachable, e.g. a VPS or a tunnel). Use `npm start`; the Vite dev server has no multiplayer backend.

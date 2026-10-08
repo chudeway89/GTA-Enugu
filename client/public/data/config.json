@@ -1,0 +1,4 @@
+{
+  "player": { "name": "Player" },
+  "spawn": { "label": "TODO: the mansion", "lat": null, "lon": null, "x": 0, "z": 0 }
+}

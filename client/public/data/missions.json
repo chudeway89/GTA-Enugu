@@ -1,0 +1,4 @@
+[
+  { "id": "m1", "title": "TODO: Mission 1", "briefing": "Replace with a mission based on your goals.", "goal": { "x": 150, "z": -120, "radius": 12 } },
+  { "id": "m2", "title": "TODO: Mission 2", "briefing": "Replace with a mission based on your goals.", "goal": { "x": -200, "z": 180, "radius": 12 } }
+]
